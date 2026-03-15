@@ -3,8 +3,19 @@ export type ApiError = {
   message: string
 }
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:8000'
+function defaultApiBaseUrl(): string {
+  if (typeof window !== 'undefined' && window.location) {
+    const { protocol, hostname } = window.location
+    if (hostname.endsWith('.app.github.dev')) {
+      const apiHost = hostname.replace(/-\d+\.app\.github\.dev$/, '-8000.app.github.dev')
+      return `${protocol}//${apiHost}`
+    }
+    if (hostname === 'localhost' || hostname === '127.0.0.1') return 'http://localhost:8000'
+  }
+  return 'http://localhost:8000'
+}
+
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? defaultApiBaseUrl()
 
 export function buildApiUrl(path: string): string {
   const base = API_BASE_URL.replace(/\/+$/, '')
@@ -46,4 +57,3 @@ export async function apiFetch<T>(
   }
   return (await resp.text()) as T
 }
-
